@@ -175,46 +175,46 @@ def name_files_50_density():
                         img_ind_1) + '.' + str(img_ind_2) + '.png'
 
 
-def name_files_30_density():
-    folder_name = "C:/Users/Dushese/files_for_jupiter/grains_density_30/img-"
-    for folder_1 in range(10, 80, 10):
-        for img_ind_1 in [4, 5]:
-            if img_ind_1 == 4:
-                indexes = [x for x in range(2, 10)]
-            else:
-                indexes = [x for x in range(0, 9)]
-            for img_ind_2 in indexes:
-                # Clusterisation
-                if folder_1 >= 30:
-                    prism_num = '2550-0.09'
-                else:
-                    prism_num = '3400-0.08'
-                yield folder_name + str(folder_1) + '-' + '49-' + prism_num + '-0.03/z' + str(
-                    img_ind_1) + '.' + str(img_ind_2) + '.png'
+# def name_files_30_density():
+#     folder_name = "C:/Users/Dushese/files_for_jupiter/grains_density_30/img-"
+#     for folder_1 in range(10, 80, 10):
+#         for img_ind_1 in [4, 5]:
+#             if img_ind_1 == 4:
+#                 indexes = [x for x in range(2, 10)]
+#             else:
+#                 indexes = [x for x in range(0, 9)]
+#             for img_ind_2 in indexes:
+#                 # Clusterisation
+#                 if folder_1 >= 30:
+#                     prism_num = '2550-0.09'
+#                 else:
+#                     prism_num = '3400-0.08'
+#                 yield folder_name + str(folder_1) + '-' + '49-' + prism_num + '-0.03/z' + str(
+#                     img_ind_1) + '.' + str(img_ind_2) + '.png'
 
 
-def name_files_30_density_colored():
-    folder_name = "C:/Users/Dushese/files_for_jupiter/grains_density_30_colored/img-"
-    for folder_1 in range(10, 100, 10):
-        if folder_1 == 90:
-            for folder_1_2 in range(89, 100, 1):
-                for img_ind_1 in [4, 5]:
-                    if img_ind_1 == 4:
-                        indexes = [x for x in range(2, 10)]
-                    else:
-                        indexes = [x for x in range(0, 9)]
-                    for img_ind_2 in indexes:
-                        yield folder_name + str(folder_1_2) + '-' + '49-2550-0.09-0.03/z' + str(
-                            img_ind_1) + '.' + str(img_ind_2) + '.png'
-        else:
-            for img_ind_1 in [4, 5]:
-                if img_ind_1 == 4:
-                    indexes = [x for x in range(2, 10)]
-                else:
-                    indexes = [x for x in range(0, 9)]
-                for img_ind_2 in indexes:
-                    yield folder_name + str(folder_1) + '-' + '49-2550-0.09-0.03/z' + str(
-                        img_ind_1) + '.' + str(img_ind_2) + '.png'
+# def name_files_30_density_colored():
+#     folder_name = "C:/Users/Dushese/files_for_jupiter/grains_density_30_colored/img-"
+#     for folder_1 in range(10, 100, 10):
+#         if folder_1 == 90:
+#             for folder_1_2 in range(89, 100, 1):
+#                 for img_ind_1 in [4, 5]:
+#                     if img_ind_1 == 4:
+#                         indexes = [x for x in range(2, 10)]
+#                     else:
+#                         indexes = [x for x in range(0, 9)]
+#                     for img_ind_2 in indexes:
+#                         yield folder_name + str(folder_1_2) + '-' + '49-2550-0.09-0.03/z' + str(
+#                             img_ind_1) + '.' + str(img_ind_2) + '.png'
+#         else:
+#             for img_ind_1 in [4, 5]:
+#                 if img_ind_1 == 4:
+#                     indexes = [x for x in range(2, 10)]
+#                 else:
+#                     indexes = [x for x in range(0, 9)]
+#                 for img_ind_2 in indexes:
+#                     yield folder_name + str(folder_1) + '-' + '49-2550-0.09-0.03/z' + str(
+#                         img_ind_1) + '.' + str(img_ind_2) + '.png'
 
 t = time.time()
 density_sum = 0
@@ -227,17 +227,17 @@ angle_dist = {}
 
 # Изменить!!! Для 50 плотности 110 кластеров, для 30 плотности 50 кластеров
 
-density_ = 30
-clstrs: int
-if density_ == 50:
-    clstrs = 110
-    generator = name_files_50_density
-elif density_ == 30:
-    clstrs = 6
-    generator = name_files_30_density_colored
+# density_ = 30
+# clstrs: int
+# if density_ == 50:
+#     clstrs = 110
+#     generator = name_files_50_density
+# elif density_ == 30:
+#     clstrs = 6
+#     generator = name_files_30_density_colored
 
 # цикл по изображениям
-for img_name in generator():
+for img_name in name_files_50_density():
     amount_images += 1 # подсчитать кол-во снимков
     print(img_name)
     image_base = cv.imread(img_name)
