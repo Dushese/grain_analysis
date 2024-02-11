@@ -51,6 +51,7 @@ def count_angles(approxed_arr):
         for i in range(len(cnt)): # Если две вершины очень близко - берем среднее этих вершин
             next_point = cnt[(i + 1) % len(cnt)]
             amount_merged = 0
+        
             if np.linalg.norm(prev_point[0] - next_point[0]) < 5 and ang_amount > 3:
                 amount_merged += 1
                 prev_point = (prev_point + next_point) / 2
@@ -392,3 +393,4 @@ ax.bar(index, values)
 ax.set_ylabel('Доля углов')
 ax.set_xlabel('значение угла, градусы')
 plt.show()
+# чекаю что гит работает
