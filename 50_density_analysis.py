@@ -3,8 +3,27 @@ from sklearn.cluster import KMeans
 import time
 from analysis_functional import *
 
+
+def name_files_50_density():
+    '''
+    Подает на вход путь к файлу
+    :return:
+    '''
+    folder_name = "C:/Users/Dushese/files_for_jupiter/3400/img-"
+    for folder_1 in range(10, 80, 10):
+        for folder_2 in range(51, 55):
+            for img_ind_1 in [4, 5]:
+                if img_ind_1 == 4:
+                    indexes = [x for x in range(2, 10)]
+                else:
+                    indexes = [x for x in range(0, 9)]
+                for img_ind_2 in indexes:
+                    yield folder_name + str(folder_1) + '-' + str(folder_2) + '-3400-0.08-0.03/z' + str(
+                        img_ind_1) + '.' + str(img_ind_2) + '.png'
+
+
 t = time.time()
-# folder_name = "C:/Users/Dushese/files_for_jupiter/grains_density_30/img-"
+
 density_sum = 0
 average_grain_area_sum = 0
 all_grains_amount = 0
