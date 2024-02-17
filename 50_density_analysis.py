@@ -162,8 +162,8 @@ for img_name in name_files_50_density():
     #         angle_dist[ang] = 1
 
     if amount_images % 20 == 1:
-        cv.imwrite(f'segmented_images/{amount_images}_segmented.png', img)
-        cv.imwrite(f'segmented_images/{amount_images}.png', img_new)
+        cv.imwrite(f'50_density_images/{amount_images}_segmented.png', img)
+        cv.imwrite(f'50_density_images/{amount_images}.png', img_new)
 
 
 print(f'Общие данные \n\tСредняя плотность зерен = {density_sum / amount_images}\n'
