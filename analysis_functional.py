@@ -190,7 +190,7 @@ def count_dist(arr: np.array, distribution):
             distribution[arr[ind]] = 1
 
 
-def plot_hist(distribution: dict, objects_amount: int, name_distribution: str, density_amount: int):
+def plot_hist(distribution: dict, objects_amount: int, name_distribution: str, folder_name: str):
     '''
     Нормирует распределение, строит график, сохраняет распределение
 
@@ -207,7 +207,7 @@ def plot_hist(distribution: dict, objects_amount: int, name_distribution: str, d
         distribution[key] = distribution[key] / objects_amount
         if distribution[key] > 0.06:
             print(f'угол = {key}, кол-во углов = {distribution[key] / objects_amount}')
-    np.save(f'{density_amount}_density_distributions/{name_distribution}.npy', distribution)
+    np.save(f'{folder_name}/{name_distribution}.npy', distribution)
     fig, ax = plt.subplots()
     ax.bar(index, values)
     ax.set_ylabel('Доля углов')

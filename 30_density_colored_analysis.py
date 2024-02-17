@@ -1,44 +1,50 @@
 import cv2 as cv
 from sklearn.cluster import KMeans
 import time
+
 from analysis_functional import *
 
 
-def name_files_50_density():
+def name_files_30_density_colored():
     '''
     Подает на вход путь к файлу
     :return:
     '''
-    folder_name = "C:/Users/Dushese/files_for_jupiter/3400/img-"
-    for folder_1 in range(10, 80, 10):
-        for folder_2 in range(51, 55):
-            for img_ind_1 in [4, 5]:
-                if img_ind_1 == 4:
-                    indexes = [x for x in range(2, 10)]
-                else:
-                    indexes = [x for x in range(0, 9)]
-                for img_ind_2 in indexes:
-                    yield folder_name + str(folder_1) + '-' + str(folder_2) + '-3400-0.08-0.03/z' + str(
-                        img_ind_1) + '.' + str(img_ind_2) + '.png'
+    folder_name = "C:/Users/Dushese/files_for_jupiter/grains_density_30_colored/img-"
+    circle = [num for num in range(10, 90, 10)] + [num for num in range(89, 100)]
+    for folder_1 in circle:
+        for img_ind_1 in [4, 5]:
+            if img_ind_1 == 4:
+                indexes = [x for x in range(2, 10)]
+            if img_ind_1 == 5:
+                indexes = [x for x in range(0, 9)]
+            for img_ind_2 in indexes:
+                # Clusterisation
+                yield folder_name + str(folder_1) + '-' + '49-2550-0.09-0.03/z' + \
+                    str(img_ind_1) + '.' + str(img_ind_2) + '.png'
 
 
 t = time.time()
-
 density_sum = 0
 average_grain_area_sum = 0
 all_grains_amount = 0
 all_angle_amount = 0
 amount_images = 0
+
+CLSTRS = 8
+
 angle_dist = {}
 
 area_dist = {}
 
-CLSTRS = 110
-
 # цикл по изображениям
-for img_name in name_files_50_density():
-    amount_images += 1 # подсчитать кол-во снимков
+
+
+
+for img_name in name_files_30_density_colored():
     print(img_name)
+    amount_images += 1 # подсчитать кол-во снимков
+    # img_name = 'C:/Users/Dushese/files_for_jupiter/grains_density_30/img-30-49-2550-0.09-0.03/z5.8.png'
     image_base = cv.imread(img_name)
     img = image_base.reshape((image_base.shape[0] * image_base.shape[1], 3))
     common_params = {
@@ -87,6 +93,7 @@ for img_name in name_files_50_density():
     markers = cv.watershed(img_real, result_markers)
 
     img_real[markers == -1] = [255, 0, 0]
+
 
     # approximation
 
@@ -149,7 +156,7 @@ for img_name in name_files_50_density():
     angles = count_angles(np.shape(img)[0], np.shape(img)[1], approxed_arr)
     all_angle_amount += len(angles)
 
-    all_grains_amount += len(angles)
+    all_grains_amount += len(areas)
 
     count_dist(angles, angle_dist)
     count_dist(areas, area_dist)
@@ -160,33 +167,16 @@ for img_name in name_files_50_density():
     #         angle_dist[ang] += 1
     #     else:
     #         angle_dist[ang] = 1
-
     if amount_images % 20 == 1:
-        cv.imwrite(f'segmented_images/{amount_images}_segmented.png', img)
-        cv.imwrite(f'segmented_images/{amount_images}.png', img_new)
+        cv.imwrite(f'30_density_colored_images/{amount_images}_segmented.png', img)
+        cv.imwrite(f'30_density_colored_images/{amount_images}.png', img_new)
 
 
 print(f'Общие данные \n\tСредняя плотность зерен = {density_sum / amount_images}\n'
       f'\tСредний размер зерна = {average_grain_area_sum / amount_images}')
-print(f'Кол-во обработанных изображений: {amount_images}')
 print(f'\n Epsilon = {eps}')
+print(f'Кол-во обработанных изображений: {amount_images}')
 print(f'Общее время выполнения: {time.time() - t}')
 
-plot_hist(angle_dist, all_angle_amount, 'angle_distribution', '50_density_distributions')
-plot_hist(area_dist, all_grains_amount, 'area_distribution', '50_density_distributions')
-# print(len(area_dist))
-
-# index = sorted(angle_dist.keys())
-# values = np.array([angle_dist[ang] for ang in index]) / all_angle_amount
-#
-# print('\n\n')
-# for key in index:
-#     angle_dist[key] = angle_dist[key] / all_angle_amount
-#     if angle_dist[key] > 0.06:
-#         print(f'угол = {key}, кол-во углов = {angle_dist[key] / all_angle_amount}')
-# np.save('angle_distribution.npy', angle_dist)
-# fig, ax = plt.subplots()
-# ax.bar(index, values)
-# ax.set_ylabel('Доля углов')
-# ax.set_xlabel('значение угла, градусы')
-# plt.show()
+plot_hist(angle_dist, all_angle_amount, 'angle_distribution', '30_density_colored_distributions')
+plot_hist(area_dist, all_grains_amount, 'area_distribution', '30_density_colored_distributions')
