@@ -161,7 +161,7 @@ def count_area(approxed_arr):
         new_approxed_arr.append(cnt)
         areas.append(round(area/100.0)) # нужно добиться какого нужного округления
         all_area += area
-    print(areas)
+    # print(areas)
     print(f'Средняя площадь зерна в пикселях = {all_area / (len(approxed_arr) - not_real_grain)}')
     print(
         f' площадь всех зерен = {all_area} \n '
@@ -181,6 +181,10 @@ def resize_img(img):
 
 
 def name_files_50_density():
+    '''
+    Подает на вход путь к файлу
+    :return:
+    '''
     folder_name = "C:/Users/Dushese/files_for_jupiter/3400/img-"
     for folder_1 in range(10, 80, 10):
         for folder_2 in range(51, 55):
@@ -197,9 +201,9 @@ def count_dist(arr: np.array, distribution):
     '''
     Считает распределение величины
     :param arr: массив величин
-    :return: массив, где каждому значению arr сопоставлено количетсво встретившихся значений в arr
+    :return: массив, где каждому значению arr сопоставлено количество встретившихся значений в arr
     '''
-    print(arr)
+    # print(arr, np.shape(arr)[0])
     for ind in range(np.shape(arr)[0]):
         if arr[ind] in distribution:
             distribution[arr[ind]] += 1
@@ -207,16 +211,23 @@ def count_dist(arr: np.array, distribution):
             distribution[arr[ind]] = 1
 
 
-def plot_hist(distribution: dict, name_distribution: str):
+def plot_hist(distribution: dict, objects_amount: int, name_distribution: str):
+    '''
+    Нормирует распределение, строит график
+
+    :param distribution: распредедение
+    :param objects_amount:  кол-во объектов чтоды отнормировать
+    :param name_distribution: название величины
+    '''
     # print(name_distribution, distribution)
     index = sorted(distribution.keys())
-    values = np.array([distribution[ang] for ang in index]) / all_angle_amount
+    values = np.array([distribution[ang] for ang in index]) / objects_amount
     print('\n\n')
     for key in index:
-        distribution[key] = distribution[key] / all_angle_amount
+        distribution[key] = distribution[key] / objects_amount
         if distribution[key] > 0.06:
-            print(f'угол = {key}, кол-во углов = {distribution[key] / all_angle_amount}')
-    np.save(f'{name_distribution}.npy', distribution)
+            print(f'угол = {key}, кол-во углов = {distribution[key] / objects_amount}')
+    np.save(f'distributions/{name_distribution}.npy', distribution)
     fig, ax = plt.subplots()
     ax.bar(index, values)
     ax.set_ylabel('Доля углов')
@@ -234,6 +245,8 @@ angle_dist = {}
 
 area_dist = {}
 
+clstrs = 110
+
 # цикл по изображениям
 for img_name in name_files_50_density():
     amount_images += 1 # подсчитать кол-во снимков
@@ -245,7 +258,7 @@ for img_name in name_files_50_density():
         "n_init": "auto",
         "random_state": 4
     }
-    y_pred = KMeans(n_clusters=110, **common_params).fit_predict(img)#cv.medianBlur(image_base,5))
+    y_pred = KMeans(n_clusters=clstrs, **common_params).fit_predict(img)#cv.medianBlur(image_base,5))
 
     clusters_matrix = y_pred.reshape(image_base.shape[0], image_base.shape[1])
 
@@ -286,7 +299,6 @@ for img_name in name_files_50_density():
     markers = cv.watershed(img_real, result_markers)
 
     img_real[markers == -1] = [255, 0, 0]
-
 
     # approximation
 
@@ -349,6 +361,8 @@ for img_name in name_files_50_density():
     angles = count_angles(approxed_arr)
     all_angle_amount += len(angles)
 
+    all_grains_amount += len(angles)
+
     count_dist(angles, angle_dist)
     count_dist(areas, area_dist)
 
@@ -359,10 +373,9 @@ for img_name in name_files_50_density():
     #     else:
     #         angle_dist[ang] = 1
 
-    if img_ind_2 == 2:
-        name = str(folder_1) + '-' + '49' + '-3400-0.08-0.03-z' + str(
-    img_ind_1) + '.' + str(img_ind_2)
-        cv.imwrite(f'{name}_segmented.png', img)
+    if amount_images // 20 == 0:
+        cv.imwrite(f'segmented_images/{amount_images}_segmented.png', img)
+        cv.imwrite(f'segmented_images/{amount_images}.png', img_new)
 
 
 print(f'Общие данные \n\tСредняя плотность зерен = {density_sum / amount_images}\n'
@@ -371,8 +384,8 @@ print(f'\tКол-во снимков = {amount_images}')
 print(f'\n Epsilon = {eps}')
 print(f'Общее время выполнения: {time.time() - t}')
 
-plot_hist(angle_dist, 'angle_distribution')
-plot_hist(area_dist, 'area_distribution')
+plot_hist(angle_dist, all_angle_amount, 'angle_distribution')
+plot_hist(area_dist, all_grains_amount, 'area_distribution')
 # print(len(area_dist))
 
 # index = sorted(angle_dist.keys())
