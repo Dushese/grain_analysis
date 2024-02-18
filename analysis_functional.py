@@ -32,7 +32,7 @@ def drow_three_points(img, one, two, three):
     return img
 
 
-def count_angles(x_shape, y_shape, approxed_arr):
+def count_characteristics(x_shape, y_shape, approxed_arr):
     """
     Считает углы всех многоугольников по координатам их вершин
 
@@ -41,7 +41,23 @@ def count_angles(x_shape, y_shape, approxed_arr):
     """
     angles = []
     counter = 0
+
+    all_area = 0
+    not_real_grain = 0  # для подсчета ненастоящих зерен
+    areas = []
+    new_approxed_arr = []
+
     for cnt in approxed_arr:
+        # считаем площади
+        area = Polygon([point[0] for point in cnt]).area
+        if area < 5:  # удаляю случайно выделенные области - очень маленькие
+            not_real_grain += 1
+            continue
+        new_approxed_arr.append(cnt)
+        areas.append(round(area))  # нужно добиться какого-то нужного округления
+        all_area += area
+
+        # считаем углы
         cnt_new = []
         prev_point = cnt[0]
         ang_amount = len(cnt)
@@ -113,7 +129,17 @@ def count_angles(x_shape, y_shape, approxed_arr):
     # cv.imshow('cvcv', img)
     # cv.waitKey()
     # cv.destroyAllWindows()
-    return angles
+
+    print(f'Средняя площадь зерна в пикселях = {all_area / (len(approxed_arr) - not_real_grain)}')
+    print(
+        f' площадь всех зерен = {all_area} \n '
+        f'площадь изображения = {x_shape * y_shape} \n '
+        f'плотность зерен = {all_area / (x_shape * y_shape)} \n '
+        f'максимальная площадь зерна = {np.max(areas)} \n '  # обратите внимание на areas, может быть сильно округлен
+        f'минимальная площадь зерна = {np.min(areas)} \n '  # обратите внимание на areas, может быть сильно округлен
+        f'кол-во зерен = {len(areas)}')
+
+    return angles, new_approxed_arr, all_area / (x_shape * y_shape), all_area / (len(approxed_arr) - not_real_grain), areas
 
 
 @njit()
@@ -141,7 +167,7 @@ def show_cluster(clusters_matrix, x_shape, y_shape, cluster):
     return amount_marked_pix, marker_matrix, cluster_image
 
 
-def count_area(shape_x, shape_y, approxed_arr):
+def count_area(shape_x, shape_y, approxed_arr, img):
     """
     :param approxed_arr: координаты вершин многоугольников
     :return: новый массив координат, плотность зерен, средняя площадь зерна, массив площадей
@@ -152,11 +178,16 @@ def count_area(shape_x, shape_y, approxed_arr):
     new_approxed_arr = []
     for cnt in approxed_arr:
         area = Polygon([point[0] for point in cnt]).area
-        if area < 1: # удаляю случайно выделенные области - очень маленькие
+        if area < 5: # удаляю случайно выделенные области - очень маленькие
             not_real_grain += 1
             continue
+        # elif area == 97766:
+        #     drow_three_points(img, cnt[0][0], cnt[1][0], cnt[2][0])
+        #     imgplot = plt.imshow(img)
+        #     plt.show()
+
         new_approxed_arr.append(cnt)
-        areas.append(round(area/100.0)) # нужно добиться какого нужного округления
+        areas.append(round(area)) # нужно добиться какого-то нужного округления
         all_area += area
     # print(areas)
     print(f'Средняя площадь зерна в пикселях = {all_area / (len(approxed_arr) - not_real_grain)}')
@@ -210,6 +241,23 @@ def plot_hist(distribution: dict, objects_amount: int, name_distribution: str, f
     np.save(f'{folder_name}/{name_distribution}.npy', distribution)
     fig, ax = plt.subplots()
     ax.bar(index, values)
+    ax.set_ylabel('Доля углов')
+    ax.set_xlabel('значение угла, градусы')
+    plt.show()
+
+def plot_line(distribution: dict, objects_amount: int, name_distribution: str, folder_name: str):
+    '''
+    Нормирует распределение, строит график, сохраняет распределение
+
+    :param distribution: распредедение
+    :param objects_amount:  кол-во объектов чтоды отнормировать
+    :param name_distribution: название величины
+    :density_amount: плотность зерен на изображениях, чтобы файл распределений сохранить в нужную папку
+    '''
+    # print(name_distribution, distribution)
+    arr = [x for _, x in sorted(distribution.items(), key=lambda x: x[0])]
+    fig, ax = plt.subplots()
+    ax.plot(arr)
     ax.set_ylabel('Доля углов')
     ax.set_xlabel('значение угла, градусы')
     plt.show()
