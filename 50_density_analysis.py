@@ -9,7 +9,8 @@ def name_files_50_density():
     Подает на вход путь к файлу
     :return:
     '''
-    folder_name = "C:/Users/Dushese/files_for_jupiter/3400/img-"
+    # folder_name = "C:/Users/Dushese/files_for_jupiter/3400/img-"
+    folder_name = "./3400/img-"
     for folder_1 in range(10, 80, 10):
         for folder_2 in range(51, 55):
             for img_ind_1 in [4, 5]:
