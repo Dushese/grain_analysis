@@ -12,6 +12,10 @@ all_grains_amount = 0
 all_angle_amount = 0
 amount_images = 0
 
+
+all_areas = []
+all_angles = []
+
 CLSTRS = 50
 
 angle_dist = {}
@@ -143,12 +147,15 @@ for img_name in name_files_30_density():
     #         starting_color = ((starting_color[0] + 50) % 255, (starting_color[1] + 5) % 255, (starting_color[2] + 30) % 255)
 
     # Плотность
-    approxed_arr, density, average_grain_area, areas = count_area(np.shape(img)[0], np.shape(img)[1], approxed_arr)
+    angles, approxed_arr, density, average_grain_area, areas = count_characteristics(np.shape(img)[0], np.shape(img)[1],
+                                                                                     approxed_arr)
 
+    all_angles += angles
+
+    all_areas += areas
     density_sum += density
     average_grain_area_sum += average_grain_area
-    # Распределение углов
-    angles = count_angles(np.shape(img)[0], np.shape(img)[1], approxed_arr)
+
     all_angle_amount += len(angles)
 
     all_grains_amount += len(areas)
@@ -176,3 +183,6 @@ print(f'Общее время выполнения: {time.time() - t}')
 
 plot_hist(angle_dist, all_angle_amount, 'angle_distribution', '30_density_distributions')
 plot_hist(area_dist, all_grains_amount, 'area_distribution', '30_density_distributions')
+
+np.save(f'30_density_distributions/all_areas.npy', np.array(all_areas))
+np.save(f'30_density_distributions/all_angles.npy', np.array(all_angles))
