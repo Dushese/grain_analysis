@@ -39,23 +39,29 @@ def count_characteristics(x_shape, y_shape, approxed_arr):
     :param approxed_arr: массив координат вершин для каждого многоугольника вида [ [ [[x1, y1]], [[x2, y2]], ...], ...], где x1, y1 коорднаты вершины
     :return: массив всех встречавшихся углов на изображении
     """
-    angles = []
     counter = 0
 
     all_area = 0
     not_real_grain = 0  # для подсчета ненастоящих зерен
     areas = []
+    angles = []
+    perimeters = []
     new_approxed_arr = []
 
     for cnt in approxed_arr:
         # считаем площади
-        area = Polygon([point[0] for point in cnt]).area
+        poly = Polygon([point[0] for point in cnt])
+        area = poly.area
         if area < 5:  # удаляю случайно выделенные области - очень маленькие
             not_real_grain += 1
             continue
         new_approxed_arr.append(cnt)
-        areas.append(round(area))  # нужно добиться какого-то нужного округления
+        areas.append(area)
         all_area += area
+
+        perimeters.append(poly.length)
+
+        #считаем периметр
 
         # считаем углы
         cnt_new = []
@@ -139,7 +145,7 @@ def count_characteristics(x_shape, y_shape, approxed_arr):
         f'минимальная площадь зерна = {np.min(areas)} \n '  # обратите внимание на areas, может быть сильно округлен
         f'кол-во зерен = {len(areas)}')
 
-    return angles, new_approxed_arr, all_area / (x_shape * y_shape), all_area / (len(approxed_arr) - not_real_grain), areas
+    return angles, new_approxed_arr, all_area / (x_shape * y_shape), all_area / (len(approxed_arr) - not_real_grain), areas, perimeters
 
 
 @njit()
@@ -223,7 +229,7 @@ def count_dist(arr: np.array, distribution):
 
 def plot_hist(distribution: dict, objects_amount: int, name_distribution: str, folder_name: str):
     '''
-    Нормирует распределение, строит график, сохраняет распределение
+    Нормирует распределение, строит график
 
     :param distribution: распредедение
     :param objects_amount:  кол-во объектов чтоды отнормировать
@@ -245,7 +251,7 @@ def plot_hist(distribution: dict, objects_amount: int, name_distribution: str, f
     ax.set_xlabel('значение угла, градусы')
     plt.show()
 
-def plot_line(distribution: dict, objects_amount: int, name_distribution: str, folder_name: str):
+def plot_line(distribution: dict, amount_objects):
     '''
     Нормирует распределение, строит график, сохраняет распределение
 
@@ -255,9 +261,9 @@ def plot_line(distribution: dict, objects_amount: int, name_distribution: str, f
     :density_amount: плотность зерен на изображениях, чтобы файл распределений сохранить в нужную папку
     '''
     # print(name_distribution, distribution)
-    arr = [x for _, x in sorted(distribution.items(), key=lambda x: x[0])]
+    arr = np.array([[x, y / amount_objects] for x, y in sorted(distribution.items(), key=lambda x: x[0])])
     fig, ax = plt.subplots()
-    ax.plot(arr)
+    ax.plot(arr[:, 0], arr[:, 1])
     ax.set_ylabel('Доля углов')
     ax.set_xlabel('значение угла, градусы')
     plt.show()

@@ -10,7 +10,8 @@ def name_files_30_density_colored():
     Подает на вход путь к файлу
     :return:
     '''
-    folder_name = "C:/Users/Dushese/files_for_jupiter/grains_density_30_colored/img-"
+    folder_name = "./grains_density_30_colored/img-"
+    # folder_name = "C:/Users/Dushese/files_for_jupiter/grains_density_30_colored/img-"
     circle = [num for num in range(10, 90, 10)] + [num for num in range(89, 100)]
     for folder_1 in circle:
         for img_ind_1 in [4, 5]:
@@ -33,6 +34,7 @@ amount_images = 0
 
 all_areas = []
 all_angles = []
+all_perimeters = []
 
 CLSTRS = 8
 
@@ -153,11 +155,14 @@ for img_name in name_files_30_density_colored():
     # Плотность
     # approxed_arr, density, average_grain_area, areas = count_area(np.shape(img)[0], np.shape(img)[1], approxed_arr, img)
     # Характеристики
-    angles, approxed_arr, density, average_grain_area, areas = count_characteristics(np.shape(img)[0], np.shape(img)[1], approxed_arr)
+    angles, approxed_arr, density, average_grain_area, areas, perimeters = count_characteristics(np.shape(img)[0], np.shape(img)[1], approxed_arr)
 
     all_angles += angles
 
     all_areas += areas
+
+    all_perimeters += perimeters
+
     density_sum += density
     average_grain_area_sum += average_grain_area
 
@@ -190,3 +195,4 @@ plot_hist(area_dist, all_grains_amount, 'area_distribution', '30_density_colored
 
 np.save(f'30_density_colored_distributions/all_areas.npy', np.array(all_areas))
 np.save(f'30_density_colored_distributions/all_angles.npy', np.array(all_angles))
+np.save(f'30_density_colored_distributions/all_perimeters.npy', np.array(all_perimeters))

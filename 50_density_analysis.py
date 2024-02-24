@@ -33,12 +33,13 @@ amount_images = 0
 
 all_areas = []
 all_angles = []
+all_perimeters = []
+
+CLSTRS = 110
 
 angle_dist = {}
 
 area_dist = {}
-
-CLSTRS = 110
 
 # цикл по изображениям
 for img_name in name_files_50_density():
@@ -146,11 +147,13 @@ for img_name in name_files_50_density():
     #         starting_color = ((starting_color[0] + 50) % 255, (starting_color[1] + 5) % 255, (starting_color[2] + 30) % 255)
 
     # Характеристики
-    angles, approxed_arr, density, average_grain_area, areas = count_characteristics(np.shape(img)[0], np.shape(img)[1], approxed_arr)
+    angles, approxed_arr, density, average_grain_area, areas, perimeters = count_characteristics(np.shape(img)[0], np.shape(img)[1], approxed_arr)
 
     all_angles += angles
 
     all_areas += areas
+
+    all_perimeters += perimeters
 
     density_sum += density
     average_grain_area_sum += average_grain_area
@@ -186,17 +189,4 @@ plot_hist(area_dist, all_grains_amount, 'area_distribution', '50_density_distrib
 
 np.save(f'50_density_distributions/all_areas.npy', np.array(all_areas))
 np.save(f'50_density_distributions/all_angles.npy', np.array(all_angles))
-# index = sorted(angle_dist.keys())
-# values = np.array([angle_dist[ang] for ang in index]) / all_angle_amount
-#
-# print('\n\n')
-# for key in index:
-#     angle_dist[key] = angle_dist[key] / all_angle_amount
-#     if angle_dist[key] > 0.06:
-#         print(f'угол = {key}, кол-во углов = {angle_dist[key] / all_angle_amount}')
-# np.save('angle_distribution.npy', angle_dist)
-# fig, ax = plt.subplots()
-# ax.bar(index, values)
-# ax.set_ylabel('Доля углов')
-# ax.set_xlabel('значение угла, градусы')
-# plt.show()
+np.save(f'50_density_distributions/all_perimeters.npy', np.array(all_perimeters))

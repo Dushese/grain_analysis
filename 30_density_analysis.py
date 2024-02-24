@@ -15,6 +15,7 @@ amount_images = 0
 
 all_areas = []
 all_angles = []
+all_perimeters = []
 
 CLSTRS = 50
 
@@ -147,12 +148,16 @@ for img_name in name_files_30_density():
     #         starting_color = ((starting_color[0] + 50) % 255, (starting_color[1] + 5) % 255, (starting_color[2] + 30) % 255)
 
     # Плотность
-    angles, approxed_arr, density, average_grain_area, areas = count_characteristics(np.shape(img)[0], np.shape(img)[1],
-                                                                                     approxed_arr)
+    angles, approxed_arr, density, average_grain_area, areas, perimeters = count_characteristics(np.shape(img)[0],
+                                                                                                 np.shape(img)[1],
+                                                                                                 approxed_arr)
 
     all_angles += angles
 
     all_areas += areas
+
+    all_perimeters += perimeters
+
     density_sum += density
     average_grain_area_sum += average_grain_area
 
@@ -186,3 +191,4 @@ plot_hist(area_dist, all_grains_amount, 'area_distribution', '30_density_distrib
 
 np.save(f'30_density_distributions/all_areas.npy', np.array(all_areas))
 np.save(f'30_density_distributions/all_angles.npy', np.array(all_angles))
+np.save(f'30_density_colored_distributions/all_perimeters.npy', np.array(all_perimeters))
