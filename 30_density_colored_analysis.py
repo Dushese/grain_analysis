@@ -1,3 +1,6 @@
+import os
+import pickle
+
 import cv2 as cv
 from sklearn.cluster import KMeans
 import time
@@ -12,7 +15,7 @@ def name_files_30_density_colored():
     '''
     folder_name = "./grains_density_30_colored/img-"
     # folder_name = "C:/Users/Dushese/files_for_jupiter/grains_density_30_colored/img-"
-    circle = [num for num in range(10, 90, 10)] + [num for num in range(89, 100)]
+    circle = [num for num in range(10, 90, 10)] + [num for num in range(89, 114)]
     for folder_1 in circle:
         for img_ind_1 in [4, 5]:
             if img_ind_1 == 4:
@@ -25,6 +28,126 @@ def name_files_30_density_colored():
                     str(img_ind_1) + '.' + str(img_ind_2) + '.png'
 
 
+def change_color(color_flag):
+    return 255 if color_flag == 1 else 0
+
+
+def find_markers(clstrs: int, img_name, clusters_matrix, shape):
+
+    result_markers = np.zeros((shape, shape))
+    result_image = np.zeros((shape, shape))
+    kernel_erode = np.ones((5, 5), np.uint8)
+    # kernel_dilate = np.ones((3, 3), np.uint8)
+    flag = 0
+    for x in range(clstrs):
+      amount_markered_in_pix, marker_matrix, cluster_image = show_cluster(clusters_matrix, shape, shape, x)
+      if amount_markered_in_pix / (shape * shape) > 0.5:  # если кол-во точек,
+                                                           # принадлежащих одному кластеру больше 60% от
+                                                           # всей картинки, то это фон, он нам не нужен
+        # print('Номер маркера и его доля', x, amount_markered_in_pix / (shape * shape))
+        if x == 0:
+            continue
+        else:
+            print('Смена сида инициализации')
+            return None, None
+      marker_matrix = cv.erode(marker_matrix, kernel_erode, iterations=2)
+      result_markers += marker_matrix
+
+      cluster_image = cv.erode(cluster_image, kernel_erode, iterations=2)
+      result_image += cluster_image
+
+
+
+    # Подготовка к watershed
+
+    img = cv.imread(img_name, cv.IMREAD_GRAYSCALE)
+    ret, thresh = cv.threshold(img, 69, 255, cv.THRESH_BINARY_INV)
+
+    # opening = cv.morphologyEx(thresh, cv.MORPH_OPEN, kernel, iterations = 1)
+    kernel = np.ones((3, 3), np.uint8)
+    sure_bg = cv.dilate(thresh, kernel, iterations=30)
+
+    sure_fg = np.uint8(result_image)
+    unknown = cv.subtract(sure_bg, sure_fg)
+    # watershed
+    img_watershed = cv.imread(img_name)
+    img_result = np.copy(img_watershed)
+    img_coord = np.copy(img_watershed)
+    result_markers = np.array(result_markers, dtype=np.int32)
+    result_markers += 1
+    result_markers[unknown > 50] = 0
+    markers = cv.watershed(img_watershed, result_markers)
+    img_watershed[markers == -1] = [255, 0, 0]
+
+    # поиск координат
+    # img_coord[::] = [0, 0, 0]
+    # print(markers)
+    # for i in range(np.shape(thresh)[0] - 1):
+    #     for j in range(1, np.shape(thresh)[0] - 1):
+    #         # print(color_flag, thresh[i, j], thresh[i, j] == 255)
+    #         if markers[i, j] == -1:
+    #             if markers[i, j + 1] != -1:
+    #                 markers[i, j + 1] = -1
+    #             elif markers[i + 1, j] != -1:
+    #                 markers[i + 1, j] = -1
+    #             markers[i, j + 1] = [255, 0, 0]
+    # for i in range(np.shape(thresh)[0] - 1):
+    #     for j in range(1, np.shape(thresh)[0] - 1):
+    #         if markers[i, j] > 1:
+    #             img_coord[i, j] = [255, 0, 0]
+
+    # img_coord[markers == -1] = [255, 0, 0]
+    gray = cv.cvtColor(img_coord, cv.COLOR_BGR2GRAY)
+
+    ret, thresh = cv.threshold(gray, 0, 255, cv.THRESH_OTSU)
+    # plt.imshow(thresh)
+    # plt.show()
+    # th = np.copy(thresh)
+    # for i in range(np.shape(thresh)[0]):
+    #     color_flag = 1
+    #     # print('----------------')
+    #     for j in range(1, np.shape(thresh)[0] - 1):
+    #         # print(color_flag, thresh[i, j], thresh[i, j] == 255)
+    #         if thresh[i, j] == 255 and thresh[i, j + 1] != 255:
+    #             # print('CHANGE')
+    #             color_flag *= -1
+    #         else:
+    #             thresh[i, j] = change_color(color_flag)
+
+
+    contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_TC89_L1)
+
+    img_tst = cv.imread(img_name)
+    img_tst = cv.drawContours(img_tst, contours, -1, (0, 0, 255), 1)
+
+    # plt.imshow(img_tst)
+    # plt.show()
+
+    img_tst = cv.imread(img_name)
+    i = 0
+    for cnt in contours:
+        # if hierarchy[0, i, 2] == -1:
+        #     test = np.copy(img_tst)
+        #     approx = cv.approxPolyDP(cnt, 0.0001 * cv.arcLength(cnt, True), True)
+        #     print(i, hierarchy[0, i])
+        #     # draws boundary of contours.
+        #     cv.drawContours(test, [approx], 0, (255, 255, 0), 1)
+        #     plt.imshow(test)
+        #     plt.show()
+        i += 1
+    # plt.imshow(img_tst)
+    # plt.show()
+    new_cntrs = [contours[ind] for h, ind in zip(hierarchy[0], range(len(hierarchy[0]))) if h[2] == -1]
+
+    approxed_arr = approximation(new_cntrs)
+
+    img_result = drow_vertices(approxed_arr, img_result)
+
+    # plt.imshow(img_result)
+    # plt.show()
+    return approxed_arr, img_result #approxed_arr, img # Тут не аппроксимирую, чтобы потом поварьировать коэф аппроксимации
+
+
 t = time.time()
 density_sum = 0
 average_grain_area_sum = 0
@@ -35,164 +158,87 @@ amount_images = 0
 all_areas = []
 all_angles = []
 all_perimeters = []
+all_grains = {}
 
-CLSTRS = 8
+CLSTRS = 4
 
 angle_dist = {}
 
-area_dist = {}
 
 # цикл по изображениям
 
-
+#
+area_dist = {}
+prev = 0
+intervals = map(int, np.linspace(0, 120000, 10))
+for point in intervals:
+    area_dist[f'{prev}_{point}'] = []
+    prev = point
 
 for img_name in name_files_30_density_colored():
+    # C:/Users/an.v.potapov/PycharmProjects/grain_analysis/grains_density_30_colored/img-40-49-2550-0.09-0.03/z5.3.png
+    # img_name = "C:/Users/an.v.potapov/PycharmProjects/grain_analysis/grains_density_30_colored/img-40-49-2550-0.09-0.03/z5.3.png"
     print(img_name)
-    amount_images += 1 # подсчитать кол-во снимков
-    # img_name = 'C:/Users/Dushese/files_for_jupiter/grains_density_30/img-30-49-2550-0.09-0.03/z5.8.png'
+    if not os.path.isfile(img_name):
+        print('Такого файла нет!')
+        continue
     image_base = cv.imread(img_name)
-    img = image_base.reshape((image_base.shape[0] * image_base.shape[1], 3))
-    common_params = {
-        "init": 'k-means++',
-        "n_init": "auto",
-        "random_state": 4
-    }
-    y_pred = KMeans(n_clusters=CLSTRS, **common_params).fit_predict(img)#cv.medianBlur(image_base,5))
+    amount_images += 1  # подсчитать кол-во снимков
+    random_state = 4
+    while True:
+        img = image_base.reshape((image_base.shape[0] * image_base.shape[1], 3))
+        common_params = {
+            "init": 'k-means++',
+            "n_init": "auto",
+            "random_state": random_state
+        }
+        y_pred = KMeans(n_clusters=CLSTRS, **common_params).fit_predict(img)#cv.medianBlur(image_base,5))
 
-    clusters_matrix = y_pred.reshape(image_base.shape[0], image_base.shape[1])
+        clusters_matrix = y_pred.reshape(image_base.shape[0], image_base.shape[1])
 
+        approxed_arr, segmented_image = find_markers(CLSTRS, img_name, clusters_matrix, image_base.shape[0])
+        if approxed_arr is not None:
+            break
+        random_state += 1
 
-    result_markers = np.zeros((image_base.shape[0], image_base.shape[1]))
-    result_image = np.zeros((image_base.shape[0], image_base.shape[1]))
-    kernel_erode = np.ones((5, 5), np.uint8)
-    kernel_dilate = np.ones((3, 3), np.uint8)
-    flag = 0
-    for x in range(CLSTRS):
-      amount_markered_in_pix, marker_matrix, cluster_image = show_cluster(clusters_matrix, image_base.shape[0], image_base.shape[1], x)
-      if amount_markered_in_pix > image_base.shape[0] * image_base.shape[1] / 4: # если кол-во точек, принадлежащих одному кластеру равно четверти всей картинке и больше, то это фон, он нам не нужен
-        continue
-      marker_matrix = cv.erode(marker_matrix, kernel_erode, iterations=2)
-      result_markers += marker_matrix
-
-      cluster_image = cv.erode(cluster_image, kernel_erode, iterations=2)
-      result_image += cluster_image
-    # cv.imshow('cvcv', result_image)
-    # cv.waitKey()
-    # cv.destroyAllWindows()
-
-    # Подготовка к watershed
-
-    img = cv.imread(img_name, cv.IMREAD_GRAYSCALE)
-    ret, thresh = cv.threshold(img, 69, 255, cv.THRESH_BINARY_INV)
-    # opening = cv.morphologyEx(thresh, cv.MORPH_OPEN, kernel, iterations = 1)
-    kernel = np.ones((3, 3), np.uint8)
-    sure_bg = cv.dilate(thresh, kernel, iterations=3)
-    sure_fg = np.uint8(result_image)
-    unknown = cv.subtract(sure_bg, sure_fg)
-
-    # watershed
-    img_real = cv.imread(img_name)
-    result_markers = np.array(result_markers, dtype=np.int32)
-    result_markers += 1
-    result_markers[unknown > 50] = 0
-    markers = cv.watershed(img_real, result_markers)
-
-    img_real[markers == -1] = [255, 0, 0]
-
-
-    # approximation
-
-    img = cv.imread(img_name)
-    img[::] = [0, 0, 0]
-    img[markers == -1] = [255, 0, 0]
-    gray = cv.cvtColor(img, cv.COLOR_BGR2GRAY)
-    ret, thresh = cv.threshold(gray, 0, 255, cv.THRESH_OTSU)
-    # fig, ax = plt.subplots(figsize=(12, 12))
-    # plt.imshow(img_test)
-    # plt.show()
-    img[:] = 0
-    contours, hierarchy = cv.findContours(thresh, cv.RETR_TREE, cv.CHAIN_APPROX_SIMPLE)
-
-    new_cntrs = [contours[ind] for h, ind in zip(hierarchy[0], range(len(hierarchy[0]))) if h[2] == -1]
-    if len(new_cntrs) < 5:
+    if len(approxed_arr) < 20 or len(approxed_arr) > 1000: # аномальное кол-во зерен
         amount_images -= 1
-        print(f'кол-во найденных зерен {len(new_cntrs)} => не учитывается в статистике')
+        print(f'кол-во найденных зерен {len(approxed_arr)} => не учитывается в статистике')
         continue
-    # cv.drawContours(img, contours, -1, (255, 255, 0), 1, cv.LINE_AA)
-    cv.drawContours(img, new_cntrs, -1, (255, 0, 0), 1, cv.LINE_AA)
+    print(f'Кол-во найденных зерен: {len(approxed_arr)}')
 
-    starting_color = [0, 0, 100]
-    img_new = cv.imread(img_name)
+    all_grains[amount_images] = [[el[0] for el in arr] for arr in approxed_arr]
+    angles, approxed_arr, density, average_grain_area, areas, perimeters, area_dist_on_img = count_characteristics(np.shape(image_base)[0], np.shape(image_base)[1], approxed_arr, 1, image_base)
 
-    img = img_new.copy()
-    eps = 0.01
-    approxed_arr = []
-    for cnt_arr in new_cntrs:
-        epsilon = eps * cv.arcLength(cnt_arr, True)
-        approx = cv.approxPolyDP(cnt_arr, epsilon, True)
-        if len(approx) <= 2:
-            continue
-        approxed_arr.append(approx)
-        cv.drawContours(img, [approx], -1, (255, 0, 0), 1, cv.LINE_AA)
-        for cn in approx:
-            img[cn[0][1] - 1:cn[0][1] + 1, cn[0][0]-1:cn[0][0]+1] = starting_color
-        starting_color = ((starting_color[0] + 50) % 255, (starting_color[1] + 5) % 255, (starting_color[2] + 30) % 255)
+    for key in area_dist.keys():
+        area_dist[key].append(area_dist_on_img[key])
+    # image_segmented_statistic = drow_vertices(approxed_arr, image_base)
+    # f = plt.figure(figsize=(9, 18))
+    # seg1 = f.add_subplot(121)
+    # seg2 = f.add_subplot(122)
+    # seg1.imshow(image_base)
+    # seg2.imshow(image_segmented_statistic)
+    # plt.show()
 
 
-    # for eps in np.linspace(0.0001, 0.02, 2):
-    #     img = img_new.copy()
-    #     # print('eps=', eps)
-    #     approxed_arr = []
-    #     for cnt_arr in new_cntrs:
-    #         epsilon = eps * cv.arcLength(cnt_arr, True)
-    #         approx = cv.approxPolyDP(cnt_arr, epsilon, True)
-    #         approxed_arr.append(approx)
-    #         cv.drawContours(img, [approx], -1, (255, 0, 0), 1, cv.LINE_AA)
-    #         for cn in approx:
-    #             img[cn[0][1] - 2:cn[0][1] + 2, cn[0][0]-2:cn[0][0]+2] = starting_color
-    #         starting_color = ((starting_color[0] + 50) % 255, (starting_color[1] + 5) % 255, (starting_color[2] + 30) % 255)
-
-    # Плотность
-    # approxed_arr, density, average_grain_area, areas = count_area(np.shape(img)[0], np.shape(img)[1], approxed_arr, img)
-    # Характеристики
-    angles, approxed_arr, density, average_grain_area, areas, perimeters = count_characteristics(np.shape(img)[0], np.shape(img)[1], approxed_arr)
-
-    all_angles += angles
-
-    all_areas += areas
-
-    all_perimeters += perimeters
-
-    density_sum += density
-    average_grain_area_sum += average_grain_area
-
-    all_angle_amount += len(angles)
-
-    all_grains_amount += len(areas)
-
-    count_dist(angles, angle_dist)
-    count_dist(areas, area_dist)
+    # if amount_images % 20 == 1:
+    #     cv.imwrite(f'30_density_colored_images/{amount_images}_segmented_statistic.png', image_segmented_statistic)
+    #     cv.imwrite(f'30_density_colored_images/{amount_images}_segmented.png', segmented_image)
+    #     cv.imwrite(f'30_density_colored_images/{amount_images}.png', image_base)
 
 
-    # for ang in angles:
-    #     if ang in angle_dist:
-    #         angle_dist[ang] += 1
-    #     else:
-    #         angle_dist[ang] = 1
-    if amount_images % 20 == 1:
-        cv.imwrite(f'30_density_colored_images/{amount_images}_segmented.png', img)
-        cv.imwrite(f'30_density_colored_images/{amount_images}.png', img_new)
-
-
-print(f'Общие данные \n\tСредняя плотность зерен = {density_sum / amount_images}\n'
-      f'\tСредний размер зерна = {average_grain_area_sum / amount_images}')
-print(f'\n Epsilon = {eps}')
+# print(f'Общие данные \n\tСредняя плотность зерен = {density_sum / amount_images}\n'
+#       f'\tСредний размер зерна = {average_grain_area_sum / amount_images}')
+# print(f'\n Epsilon = {eps}')
 print(f'Кол-во обработанных изображений: {amount_images}')
 print(f'Общее время выполнения: {time.time() - t}')
 
-plot_hist(angle_dist, all_angle_amount, 'angle_distribution', '30_density_colored_distributions')
-plot_hist(area_dist, all_grains_amount, 'area_distribution', '30_density_colored_distributions')
+# np.save(f'30_density_colored_distributions/all_areas.npy', np.array(all_areas))
+# np.save(f'30_density_colored_distributions/all_angles.npy', np.array(all_angles))
+# np.save(f'30_density_colored_distributions/all_perimeters.npy', np.array(all_perimeters))
 
-np.save(f'30_density_colored_distributions/all_areas.npy', np.array(all_areas))
-np.save(f'30_density_colored_distributions/all_angles.npy', np.array(all_angles))
-np.save(f'30_density_colored_distributions/all_perimeters.npy', np.array(all_perimeters))
+# with open('30_density_colored_distributions/all_grains.pkl', 'wb') as f:
+#     pickle.dump(all_grains, f)
+
+with open('30_density_colored_distributions/area_dist.pkl', 'wb') as f:
+    pickle.dump(area_dist, f)

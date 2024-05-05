@@ -1,3 +1,5 @@
+import pickle
+
 import cv2 as cv
 from sklearn.cluster import KMeans
 import time
@@ -16,6 +18,7 @@ amount_images = 0
 all_areas = []
 all_angles = []
 all_perimeters = []
+all_grains = {}
 
 CLSTRS = 50
 
@@ -132,7 +135,7 @@ for img_name in name_files_30_density():
         for cn in approx:
             img[cn[0][1] - 1:cn[0][1] + 1, cn[0][0]-1:cn[0][0]+1] = starting_color
         starting_color = ((starting_color[0] + 50) % 255, (starting_color[1] + 5) % 255, (starting_color[2] + 30) % 255)
-
+    all_grains[amount_images] = approxed_arr
 
     # for eps in np.linspace(0.0001, 0.02, 2):
     #     img = img_new.copy()
@@ -192,3 +195,6 @@ plot_hist(area_dist, all_grains_amount, 'area_distribution', '30_density_distrib
 np.save(f'30_density_distributions/all_areas.npy', np.array(all_areas))
 np.save(f'30_density_distributions/all_angles.npy', np.array(all_angles))
 np.save(f'30_density_colored_distributions/all_perimeters.npy', np.array(all_perimeters))
+
+with open('50_density_distributions/all_grains.pkl', 'wb') as f:
+    pickle.dump(all_grains, f)
